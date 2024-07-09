@@ -41,4 +41,3 @@ Begin
       Move( szErrMsg, strErrMsg[1], nZeroPos );
     End;
   End;
-End;

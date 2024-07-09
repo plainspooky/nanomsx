@@ -1,9 +1,9 @@
-Procedure CALSLT (Var regs: TRegs);
-Var
+procedure CALSLT (var regs: TRegs);
+var
   nA, nF:                     Byte;
   nHL, nDE, nBC, nIX, nIY:    Integer;
 
-Begin
+begin
   nA  := regs.A;
   nHL := regs.HL;
   nDE := regs.DE;
@@ -11,7 +11,7 @@ Begin
   nIX := regs.IX;
   nIY := Swap( regs.IY );
 
-  InLine(
+  inline(
     $F5/                  { PUSH AF      ; Push all registers  }
     $C5/                  { PUSH BC                            }
     $D5/                  { PUSH DE                            }
@@ -44,80 +44,80 @@ Begin
   );
 
   (* Update the caller register struct *)
-    regs.A  := nA;
-    regs.F  := nF;
-    regs.BC := nBC;
-    regs.DE := nDE;
-    regs.HL := nHL;
-    regs.IY := nIY;
-    regs.IX := nIX;
-End;
+  regs.A  := nA;
+  regs.F  := nF;
+  regs.BC := nBC;
+  regs.DE := nDE;
+  regs.HL := nHL;
+  regs.IY := nIY;
+  regs.IX := nIX;
+end;
 
-Procedure ScreenWidth (nWidth: Byte);
-Begin
-    LINL40  := nWidth;
-    regs.IX := ctINITXT;
-    regs.IY := EXPTBL;
-    CALSLT (regs);
-End;
+procedure ScreenWidth (nWidth: Byte);
+begin
+  LINL40  := nWidth;
+  regs.IX := ctINITXT;
+  regs.IY := EXPTBL;
+  CALSLT (regs);
+end;
 
-Procedure InitFnKeys;
-Begin
-    regs.IX := ctINIFNK;
-    regs.IY := EXPTBL;
-    CALSLT (regs);
-End;
+procedure InitFnKeys;
+begin
+  regs.IX := ctINIFNK;
+  regs.IY := EXPTBL;
+  CALSLT (regs);
+end;
 
-Procedure SetFnKeyStatus( bFnKeyStatus : Boolean );
-Begin
-    If (bFnKeyStatus) Then
-        regs.IX := ctDSPFNK
-    Else
-        regs.IX := ctERAFNK;
+procedure SetFnKeyStatus( bFnKeyStatus : Boolean );
+begin
+  if (bFnKeyStatus) then
+    regs.IX := ctDSPFNK
+  else
+    regs.IX := ctERAFNK;
 
-    regs.IY := EXPTBL;
-    CALSLT (regs);
-End;
+  regs.IY := EXPTBL;
+  CALSLT (regs);
+end;
 
-Procedure GetScreenStatus( Var scrStatus : TScreenStatus );
-Begin
-    With scrStatus Do
-    Begin
-        nWidth    := LINLEN;
-        nBkColor  := BAKCLR;
-        nBdrColor := BDRCLR;
-        nFgColor  := FORCLR;
-        bFnKeyOn  := (CNSDFG <> 0);
+procedure GetScreenStatus( var scrStatus : TScreenStatus );
+begin
+  with scrStatus do
+  begin
+    nWidth    := LINLEN;
+    nBkColor  := BAKCLR;
+    nBdrColor := BDRCLR;
+    nFgColor  := FORCLR;
+    bFnKeyOn  := (CNSDFG <> 0);
 
-        If( SCRMOD = 0 ) Then
-            TextMode := TextMode4080
-        Else
-            TextMode := TextMode32;
-    End;
-End;
+    if( SCRMOD = 0 ) then
+      TextMode := TextMode4080
+    else
+      TextMode := TextMode32;
+  end;
+end;
 
 procedure SetFnKey(i: byte; st: TStr15);
 var
-    ei, a, c: integer;
-    cm: TStr15;
+  ei, a, c: integer;
+  cm: TStr15;
 
 begin
-    if (length(st) = 0) then
-        exit;
+  if (length(st) = 0) then
+    exit;
 
-    fillchar(cm, sizeof(cm), chr(0));
-    for a := 1 to 14 do
-        cm := cm + chr(0);
+  fillchar(cm, sizeof(cm), chr(0));
+  for a := 1 to 14 do
+    cm := cm + chr(0);
 
-    st := st + cm;
-    ei := $F87f + 16 * (i - 1) - 1;
+  st := st + cm;
+  ei := $F87f + 16 * (i - 1) - 1;
 
-    for a := 1 to 15 do
-    begin
-        c := ord(copy(st, a, 1));
-        mem[ei + a] := c;
-    end;
-    mem[ei + a + 1] := 0;
+  for a := 1 to 15 do
+  begin
+    c := ord(copy(st, a, 1));
+    mem[ei + a] := c;
+  end;
+  mem[ei + a + 1] := 0;
 end;
 
 function msx_version: byte;

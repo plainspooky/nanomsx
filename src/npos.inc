@@ -2,7 +2,7 @@
 (*
 Function NPos(SearchPhrase, Phrase: TString; Ntuple: byte): byte;
 var
-    HowManyPos, ResultPos, counter, LengthPhrase, 
+    HowManyPos, ResultPos, counter, LengthPhrase,
     LengthSearchPhrase: byte;
     temp: TString;
 
@@ -22,9 +22,8 @@ begin
             HowManyPos := HowManyPos + 1;
         end;
         counter := counter + 1;
-    end;    
+    end;
 
     NPos := ResultPos;
 end;
 *)
-

@@ -1,102 +1,102 @@
 {Needs wrtvram.inc }
 
-Procedure _WrtVdp(Port, Value: Byte);
-Begin
-  Inline ($F3/$3A/ Value  /$D3/$99/$3A/ Port /$F6/$80/$D3/$99 );
-End;
+procedure _WrtVdp(Port, Value: Byte);
+begin
+  inline ($F3/$3A/ Value  /$D3/$99/$3A/ Port /$F6/$80/$D3/$99 );
+end;
 
-Procedure SetBlinkRate(OnTime, OffTime: Byte);
-Begin
+procedure SetBlinkRate(OnTime, OffTime: Byte);
+begin
   _WrtVdp(Vdp14,  OnTime * 16 + OffTime);
-End;
+end;
 
-Procedure SetBlinkColors(ForegroundColor, BackgroundColor:  Byte);
-Begin
+procedure SetBlinkColors(ForegroundColor, BackgroundColor:  Byte);
+begin
   _WrtVdp(Vdp13,  ForegroundColor * 16 + BackgroundColor);
-End;
+end;
 
-Procedure SetBit(TableAddr, BitNumber: Byte; Operation: Boolean);
-Begin
+procedure SetBit(TableAddr, BitNumber: Byte; Operation: Boolean);
+begin
   Byt := ColTbl[TableAddr];
-  If Operation = SetB Then
-    Byt := Byt Or MaskTable[BitNumber]
-  Else
+  if Operation = SetB then
+    Byt := Byt or MaskTable[BitNumber]
+  else
     Byt := Byt and (255 - MaskTable[BitNumber]);
   ColTbl[TableAddr] := Byt;
-End;
+end;
 
-Procedure BlinkChar(Col, Row: Byte);
-Begin
-  TableAddr :=  ((Row - 1) * 80 + Col - 1) Div 8;
-  Byt       :=  ((Row - 1) * 80 + Col - 1) Mod 8;
+procedure BlinkChar(Col, Row: Byte);
+begin
+  TableAddr :=  ((Row - 1) * 80 + Col - 1) div 8;
+  Byt       :=  ((Row - 1) * 80 + Col - 1) mod 8;
   SetBit(TableAddr, Byt, SetB);
   WriteVram(0, TXTCOL + TableAddr, Addr(ColTbl[TableAddr]), 1);
-End;
+end;
 
-Procedure ClearBlinkChar(Col, Row: Byte);
-Begin
-  TableAddr :=  ((Row - 1) * 80 + Col - 1) Div 8;
-  Byt       :=  ((Row - 1) * 80 + Col - 1) Mod 8;
+procedure ClearBlinkChar(Col, Row: Byte);
+begin
+  TableAddr :=  ((Row - 1) * 80 + Col - 1) div 8;
+  Byt       :=  ((Row - 1) * 80 + Col - 1) mod 8;
   SetBit(TableAddr, Byt, ResB);
   WriteVram(0, TXTCOL + TableAddr, Addr(ColTbl[TableAddr]), 1);
-End;
+end;
 
-Procedure Blink(Col, Row, Len: Byte);
-Var
+procedure Blink(Col, Row, Len: Byte);
+var
   TableAddr:  Integer;
   Byt, i:     Byte;
 
-Begin
-  TableAddr :=  ((Row - 1) * 80 + Col - 1) Div 8;
-  Byt       :=  ((Row - 1) * 80 + Col - 1) Mod 8;
+begin
+  TableAddr := ((Row - 1) * 80 + Col - 1) div 8;
+  Byt       := ((Row - 1) * 80 + Col - 1) mod 8;
 
-  For i:= 1 to Len Do
-  Begin
+  for i:= 1 to Len do
+  begin
     SetBit(TableAddr, Byt, SetB);
     Byt := Byt + 1;
-    If Byt = 8 Then
-      Begin
-        Byt := 0;
-        TableAddr := TableAddr + 1;
-      End;
-  End;
+    if Byt = 8 then
+    begin
+      Byt := 0;
+      TableAddr := TableAddr + 1;
+    end;
+  end;
   WriteVram(0, TXTCOL, Addr(ColTbl), 256);
-End;
+end;
 
-Procedure ClearBlink(Col, Row, Len: Byte);
-Var
+procedure ClearBlink(Col, Row, Len: Byte);
+var
   Byt, i:     Byte;
   TableAddr:  Integer;
 
-Begin
-  TableAddr :=  ((Row - 1) * 80 + Col - 1) Div 8;
-  Byt       :=  ((Row - 1) * 80 + Col - 1) Mod 8;
+begin
+  TableAddr :=  ((Row - 1) * 80 + Col - 1) div 8;
+  Byt       :=  ((Row - 1) * 80 + Col - 1) mod 8;
 
-  For i:= 1 to Len Do
-    Begin
-      SetBit(TableAddr, Byt, ResB);
-      Byt := Byt + 1;
-      If Byt = 8 Then
-        Begin
-          Byt := 0;
-          TableAddr := TableAddr + 1;
-        End;
-    End;
+  for i:= 1 to Len do
+  begin
+    SetBit(TableAddr, Byt, ResB);
+    Byt := Byt + 1;
+    if Byt = 8 then
+    begin
+      Byt := 0;
+      TableAddr := TableAddr + 1;
+    end;
+  end;
   WriteVram(0, TXTCOL, Addr(ColTbl), 256);
-End;
+end;
 
-Procedure ClearAllBlinks;
-Begin
+procedure ClearAllBlinks;
+begin
   FillChar(ColTbl, 256, 0);
   WriteVram(0, TXTCOL, Addr(ColTbl), 256);
-End;
+end;
 
-Procedure CursorBlink(Len: Byte);
-Begin
+procedure CursorBlink(Len: Byte);
+begin
   Blink(CSRX, CSRY, Len);
-End;
+end;
 
-Procedure ClearCursorBlink(Len: Byte);
-Begin
+procedure ClearCursorBlink(Len: Byte);
+begin
   ClearBlink(CSRX, CSRY, Len);
-End;
+end;
