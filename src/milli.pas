@@ -4,8 +4,8 @@
 
 program milli;
 var
-	maxlinesforreal: integer;
-	FnKeys: boolean;
+  maxlinesforreal: integer;
+  FnKeys: boolean;
 
 {$i d:defs.inc}
 {$i d:conio.inc}
@@ -16,6 +16,7 @@ var
 {$i d:fastwrit.inc}
 {$i d:txtwin.inc}
 {$i d:blink.inc}
+
 {$i d:milli1.inc}
 {$i d:milli2.inc}
 
@@ -23,247 +24,250 @@ var
 
 procedure ReadFile (AskForName: boolean);
 var
-    maxlinesnotreached: boolean;
-    VRAMAddress:        integer;
-
+  maxlinesnotreached: boolean;
+  VRAMAddress:        integer;
 begin
-    maxlinesnotreached  := false;
+  maxlinesnotreached  := false;
 
-    if AskForName then
+  if AskForName then
+  begin
+    GotoXY(1, maxlength + 1);
+    ClrEol;
+    Blink(1, maxlength + 1, maxwidth + 2);
+    temp := concat('File Name to Read: ');
+    FastWrite(temp);
+    filename := readstring(40);
+  end;
+
+  InitStructures;
+
+  assign(textfile, filename);
+  {$i-}
+  reset(textfile);
+  {$i+}
+
+  if (ioresult <> 0) then
+    StatusLine('New file')
+  else
+  begin
+    currentline := 1;
+
+    while not eof(textfile) and (currentline <= maxlinesforreal) do
     begin
-        GotoXY(1, maxlength + 1);
-        ClrEol;
-        Blink(1, maxlength + 1, maxwidth + 2);
-        temp := concat('File Name to Read: ');
-        FastWrite(temp);
-        filename := readstring(40);
+      FillChar(line, sizeof(line), chr(32));
+      readln(textfile, line);
+      FromRAMToVRAM(line, currentline);
+      emptylines[currentline] := false;
+      currentline := currentline + 1;
     end;
 
-    InitStructures;
-    
-    assign(textfile, filename);
-    {$i-}
-    reset(textfile);
-    {$i+}
+    emptylines[currentline] := false;
 
-    if (ioresult <> 0) then
-        StatusLine('New file')
-    else
-    begin
-        currentline := 1;
+  (* Problema, gravidade baixa: Se o arquivo for grande demais pro    *)
+  (* editor, ele tem que ler somente a parte que dá pra ler e parar. *)
+  str(currentline - 1, tempnumber0);
 
-        while not eof(textfile) and (currentline <= maxlinesforreal) do
-        begin
-            FillChar(line, sizeof(line), chr(32));
-            readln(textfile, line);
-            FromRAMToVRAM(line, currentline);
-            emptylines[currentline] := false;
-            currentline := currentline + 1;
-        end;
-        emptylines[currentline] := false;
-        
-(*  Problema, gravidade baixa: Se o arquivo for grande demais pro
-*   editor, ele tem que ler somente a parte que dá pra ler e parar.*)
-        str(currentline - 1, tempnumber0);
+  if maxlinesnotreached then
+    temp := concat('File is too long. Read ', tempnumber0, ' lines. ')
+  else
+    temp := concat('Read ', tempnumber0, ' lines.');
+    StatusLine (temp);
+  end;
 
-        if maxlinesnotreached then
-            temp := concat('File is too long. Read ', tempnumber0, ' lines. ')
-        else
-            temp := concat('Read ', tempnumber0, ' lines.');
+  close(textfile);
 
-        StatusLine (temp);
-    end;
+  highestline := currentline - 1;
+  currentline := 1;
+  column := 1;
+  screenline := 1;
+  insertmode := true;
 
-    close(textfile);
-
-    highestline := currentline - 1; currentline := 1;   column := 1;
-    screenline  := 1;               insertmode  := true;
-
-    DisplayFileNameOnTop;
-
-    DrawScreen(currentline, screenline, 1);
+  DisplayFileNameOnTop;
+  DrawScreen(currentline, screenline, 1);
 end;
 
 procedure BackupFile;
 begin
-    StatusLine('Backup file in progress...');
-    Path := concat (copy (filename, 1, pos(chr(46), filename)), 'BAK');
+  StatusLine('Backup file in progress...');
+  Path := concat (copy (filename, 1, pos(chr(46), filename)), 'BAK');
 
-    assign(textfile,  filename);
-    assign(backuptextfile,    Path);
-    {$i-}
-    reset   (textfile);
-    rewrite (backuptextfile);
-    {$i+}
+  assign(textfile,  filename);
+  assign(backuptextfile,    Path);
+  {$i-}
+  reset   (textfile);
+  rewrite (backuptextfile);
+  {$i+}
 
-    while not eof (textfile) do
-    begin
-        FillChar(line, sizeof(line), chr(32));
-        readln(textfile, line);
-        writeln(backuptextfile, line);
-    end;
-    
-    close(backuptextfile);
-    close(textfile);
-    ClearStatusLine;
+  while not eof (textfile) do
+  begin
+      FillChar(line, sizeof(line), chr(32));
+      readln(textfile, line);
+      writeln(backuptextfile, line);
+  end;
+
+  close(backuptextfile);
+  close(textfile);
+  ClearStatusLine;
 end;
 
 procedure WriteOut (AskForName: boolean);
 var
-    tempfilename: TString;
-    
+  tempfilename: TString;
+
 begin
-    if AskForName then
-    begin
-        GotoXY(1, maxlength + 1);
-        ClrEol;
-        Blink(1, maxlength + 1, maxwidth + 2);
-        if ord(filename[1]) <> 32 then
-            temp := concat('File Name to Write [', filename, ']: ')
-        else
-            temp := concat('File Name to Write: ');
-    
-        tempfilename := filename;
+  if AskForName then
+  begin
+    GotoXY(1, maxlength + 1);
+    ClrEol;
+    Blink(1, maxlength + 1, maxwidth + 2);
 
-        FastWrite(temp);
-        filename := readstring(40);
-    end;
-    
-    assign(textfile, filename);
-    {$i-}
-    rewrite(textfile);
-    {$i+}
-    
-    filename := tempfilename;
-    
-    temp := 'Saving file... Line     ';
-    StatusLine(temp);
-    
-    for i := 1 to highestline do
-    begin
-        FillChar(line, sizeof(line), chr(32));
-        FromVRAMToRAM(line, i);
-        writeln(textfile, line);
-        if (i mod tabnumber = 0) then
-        begin
-            str(i,  tempnumber0);
-            GotoXY(47,  maxlength + 1);
-            FastWrite(tempnumber0);
-        end;
-    end;
+    if ord(filename[1]) <> 32 then
+      temp := concat('File Name to Write [', filename, ']: ')
+    else
+      temp := concat('File Name to Write: ');
 
-    close(textfile);
-    savedfile := true;
-    
-    ClearBlink(1,   maxlength + 1, maxwidth + 2);
-    str(highestline + 1,    tempnumber0);
-    temp := concat('Wrote ',    tempnumber0, ' lines ');
-    StatusLine(temp);
+    tempfilename := filename;
+    FastWrite(temp);
+    filename := readstring(40);
+  end;
+
+  assign(textfile, filename);
+  {$i-}
+  rewrite(textfile);
+  {$i+}
+
+  filename := tempfilename;
+
+  temp := 'Saving file... Line     ';
+  StatusLine(temp);
+
+  for i := 1 to highestline do
+  begin
+    FillChar(line, sizeof(line), chr(32));
+    FromVRAMToRAM(line, i);
+    writeln(textfile, line);
+    if (i mod tabnumber = 0) then
+    begin
+        str(i,  tempnumber0);
+        GotoXY(47,  maxlength + 1);
+        FastWrite(tempnumber0);
+    end;
+  end;
+
+  close(textfile);
+  savedfile := true;
+
+  ClearBlink(1, maxlength + 1, maxwidth + 2);
+  str(highestline + 1,  tempnumber0);
+  temp := concat('Wrote ', tempnumber0, ' lines ');
+  StatusLine(temp);
 end;
 
 procedure ExitToDOS;
 begin
-    GotoXY(1, maxlength + 1);
-    ClrEol;
-    Blink(1, maxlength + 1, maxwidth + 2);
-    temp := 'Save file? (Y/N)';
-    FastWrite(temp);
-    
-    c := chr(32);
-    
-    while ((c <> 'N') and (c <> 'Y')) do
-        c := upcase(readkey);
-    
-    ClearStatusLine;
-    
-    if c = 'Y' then
-        WriteOut(true);
+  GotoXY(1, maxlength + 1);
+  ClrEol;
+  Blink(1, maxlength + 1, maxwidth + 2);
+  temp := 'Save file? (Y/N)';
+  FastWrite(temp);
 
-    EraseWindow(EditWindowPtr);
+  c := chr(32);
 
-(*  Restore function keys. *)
-    ClearAllBlinks;
-    ClrScr;
-    
-    InitFnKeys;
-   
-    if FnKeys then
+  while ((c <> 'N') and (c <> 'Y')) do
+    c := upcase(readkey);
+
+  ClearStatusLine;
+
+  if c = 'Y' then
+    WriteOut(true);
+
+  EraseWindow(EditWindowPtr);
+
+  (*  Restore function keys. *)
+  ClearAllBlinks;
+  ClrScr;
+
+  InitFnKeys;
+
+  if FnKeys then
 		SetFnKeyStatus (true);
-    Halt;
+
+  Halt;
 end;
 
 procedure SearchAndReplace;
 var
-    position, linesearch, searchlength,
-    replacementlength:                  integer;
-    tempsearchstring:                   TString;
-   
+  position, linesearch, searchlength,
+  replacementlength: integer;
+  tempsearchstring: TString;
+
 begin
-    DisplayKeys (search);
+  DisplayKeys (search);
 
-    SetBlinkRate (5, 0);
-    GotoXY(1, maxlength + 1);
-    ClrEol;
-    Blink(1, maxlength + 1, maxwidth + 2);
+  SetBlinkRate (5, 0);
+  GotoXY(1, maxlength + 1);
+  ClrEol;
+  Blink(1, maxlength + 1, maxwidth + 2);
 
-    tempsearchstring := searchstring;
-    if searchstring[1] <> ' ' then
-        temp := concat('Search (to replace) [',tempsearchstring, ']: ')
-    else
-        temp := 'Search (to replace): ';
-        
-    FastWrite (temp);
-    searchstring := readstring(40);
-    
-    searchlength := length(searchstring);
+  tempsearchstring := searchstring;
 
-    if searchlength = 0 then
-        if length(tempsearchstring) = 0 then
-        begin
-            BeginFile;
-            exit;
-        end
-        else
-            searchstring := tempsearchstring;
+  if searchstring[1] <> ' ' then
+      temp := concat('Search (to replace) [',tempsearchstring, ']: ')
+  else
+      temp := 'Search (to replace): ';
 
-    GotoXY(1, maxlength + 1);
-    ClrEol;
-    DisplayKeys (replace);
+  FastWrite (temp);
+  searchstring := readstring(40);
 
-    temp := concat('Replace with: ');
-    FastWrite (temp);
-    replacestring := readstring(40);
-    
-    replacementlength := length (replacestring);
+  searchlength := length(searchstring);
 
-    c := chr(32);    
-
-    for linesearch := 1 to highestline do
+  if searchlength = 0 then
+    if length(tempsearchstring) = 0 then
     begin
-        FillChar(line, sizeof(line), chr(32));
-        FromVRAMToRAM(line, linesearch);
-    
-        position := pos (searchstring, line);
+      BeginFile;
+      exit;
+    end
+  else
+    searchstring := tempsearchstring;
 
-        if (position > 0) then
+  GotoXY(1, maxlength + 1);
+  ClrEol;
+  DisplayKeys (replace);
+
+  temp := concat('Replace with: ');
+  FastWrite (temp);
+  replacestring := readstring(40);
+
+  replacementlength := length (replacestring);
+
+  c := chr(32);
+
+  for linesearch := 1 to highestline do
+  begin
+    FillChar(line, sizeof(line), chr(32));
+    FromVRAMToRAM(line, linesearch);
+
+    position := pos (searchstring, line);
+
+    if (position > 0) then
+    begin
+      currentline := linesearch;
+      if currentline >= 12 then
+        screenline := 12
+      else
+        screenline := currentline;
+
+      DrawScreen(currentline, screenline, 1);
+      column := position;
+      Blink(column + 1, screenline + 1, searchlength);
+
+      GotoXY(1, maxlength + 1);
+
+      if not (c in ['a', 'A']) then
         begin
-            currentline := linesearch;
-            if currentline >= 12 then
-                screenline := 12
-            else
-                screenline := currentline;
-
-            DrawScreen(currentline, screenline, 1);
-            column := position;
-            Blink(column + 1, screenline + 1, searchlength);
-
-            GotoXY(1, maxlength + 1);
-
-            if not (c in ['a', 'A']) then
-            begin
-                FastWrite('Replace this instance?');
-                c := readkey;
-            end;
+          FastWrite('Replace this instance?');
+          c := readkey;
+        end;
 
             ClearBlink(column + 1, screenline + 1, searchlength);
 
@@ -275,22 +279,22 @@ begin
                                     BeginFile;
                                     exit;
                                 end;
-                                
+
 (* a, A, y, Y *)
             65, 97, 89, 121:    begin
-                                    line := concat(copy (line, 1, 
-                                    position - 1), replacestring, 
-                                    copy (line, position + 
+                                    line := concat(copy (line, 1,
+                                    position - 1), replacestring,
+                                    copy (line, position +
                                     length (searchstring), maxcols));
 
-                                    position := pos (searchstring, 
-                                    copy (line, position + 
-                                    replacementlength + 1, maxcols)) + 
+                                    position := pos (searchstring,
+                                    copy (line, position +
+                                    replacementlength + 1, maxcols)) +
                                     position + replacementlength;
                                 end;
-(* n, N *)                                
+(* n, N *)
             78, 110:            position := pos (searchstring,
-                                copy (line, position + 
+                                copy (line, position +
                                 length(searchstring) + 1, maxcols)) +
                                 position + length(searchstring);
             end;
@@ -316,12 +320,12 @@ begin
     FillChar(templine, sizeof(templine), chr(32));
     FromVRAMToRAM(line, currentline);
 	FromVRAMToRAM(templine, currentline + 1);
-       
+
     lengthline := length(line);
-	    
+
 (*  Remove blank spaces in the beginning and in the end of the line. *)
 
-(*	End of the line *)	
+(*	End of the line *)
 	j := RUnlikePos  (#32, line) + 1;
 
 (*	Beginning of the line*)
@@ -338,15 +342,15 @@ begin
                     insert(#32, line, lengthline + 1);
                     temp := 'Text aligned to the left.';
             end;
-                    
+
         #82: begin
-(* right - R *)        
+(* right - R *)
                 blankspaces := (maxwidth - lengthline);
                 for i := 1 to blankspaces do
                     insert(#32, line, 1);
                 temp := 'Text aligned to the right.';
              end;
-                    
+
         #67: begin
 (* center - C *)
                 blankspaces := (maxwidth - lengthline) div 2;
@@ -354,11 +358,11 @@ begin
                     insert(#32, line, 1);
                 temp := 'Text centered.';
             end;
-                    
+
         #74: begin
 (* justify - J *)
                 j := 1;
-                        
+
 (*  Find all blank spaces in the phrase and save their positions. *)
                 for i := 1 to (RUnlikePos(chr(32), line)) do
                     if ord(line[i]) = 32 then
@@ -370,7 +374,7 @@ begin
 (*  Insert blank spaces in the previous saved vector's positions. *)
                 j := j - 1;
                 k := (maxwidth - lengthline) div j;
-                
+
                 for i := j downto 1 do
                 begin
                     for l := 1 to k do
@@ -379,7 +383,7 @@ begin
                 end;
 
                 k := (maxwidth - lengthline) mod j;
-                
+
                 for l := 1 to k do
                     insert(#32, line, justifyvector[1]);
                 justifyvector[1] := justifyvector[1] + k;
@@ -392,7 +396,7 @@ begin
         StatusLine(temp);
 
     FromRAMToVRAM(line, currentline);
-    
+
     quick_display(1, currentline	, line);
     quick_display(1, currentline + 1, templine);
 end;
@@ -417,7 +421,7 @@ begin
         str(BlockStart, tempnumber0);
         str(BlockEnd,   tempnumber1);
         BlockHide(false);
-        temp := concat( 'Block from line ', tempnumber0, 
+        temp := concat( 'Block from line ', tempnumber0,
                         ' to line ', tempnumber1);
         StatusLine(temp);
         c := readkey;
@@ -460,9 +464,9 @@ end;
 
 procedure BlockOperations (KindOf: byte; StartBlock, EndBlock, DestBlock: integer);
 (*
-*   0   - Copia bloco. 
+*   0   - Copia bloco.
 *   1   - Move bloco.
-*   2   - Apaga bloco. 
+*   2   - Apaga bloco.
 *)
 
 begin
@@ -476,12 +480,12 @@ begin
     end;
 
     if KindOf = 2 then
-        temp := concat( 'Block from line ', tempnumber0, ' to line ', tempnumber1, 
+        temp := concat( 'Block from line ', tempnumber0, ' to line ', tempnumber1,
                         ' will be deleted.')
     else
-        temp := concat( 'Block from line ', tempnumber0, ' to line ', tempnumber1, 
+        temp := concat( 'Block from line ', tempnumber0, ' to line ', tempnumber1,
                         ' will be ', searchstring, ' to line ', tempnumber2, '.');
-    
+
     StatusLine(temp);
     c := readkey;
 
@@ -492,7 +496,7 @@ begin
         InsertLinesIntoText (DestBlock - 1, highestline, (EndBlock - StartBlock) + 1);
         CopyBlock(StartBlock, EndBlock, DestBlock);
     end;
-    
+
     if KindOf = 1 then
         DeleteLinesFromText(StartBlock, highestline, (EndBlock - StartBlock) + 1);
 
@@ -516,7 +520,7 @@ procedure handlefunc(keynum: byte);
 var
     key         : byte;
     iscommand   : boolean;
-    
+
 begin
     case keynum of
         BS:         backspace;
@@ -532,9 +536,9 @@ begin
         CLS:        EndFile;
         CONTROLA:   BeginLine;
         CONTROLB:   PreviousWord;
-        CONTROLC:   Location(Position); 
+        CONTROLC:   Location(Position);
         CONTROLD:   del;
-        CONTROLE:   EndLine;    
+        CONTROLE:   EndLine;
         CONTROLF:   NextWord;
         CONTROLG:   Help;
         CONTROLJ:   AlignText;
@@ -556,7 +560,7 @@ begin
 (* B *)                    66, 98:  BlockMark       (BlockBegin, BlockStart);
 (* C *)                    67, 99:  BlockOperations (0, BlockStart, BlockEnd, currentline);
 (* D *)                    68, 100: Location        (HowMany);
-(* E *)                    69, 101: BlockMark       (BlockFinish, BlockEnd);           
+(* E *)                    69, 101: BlockMark       (BlockFinish, BlockEnd);
 (* F *)                    70, 102: BlockOperations (2, BlockStart, BlockEnd, currentline);
 (* H *)                    72, 104: BlockCover;
 (* Q *)                    81, 113: WhereIs         (backwardsearch, true);
@@ -597,9 +601,9 @@ begin
 
     GetMSXDOSVersion (MSXDOSversion);
 
-(*  Init text editor routines and variables. *)    
+(*  Init text editor routines and variables. *)
     InitTextEditor;
-        
+
     if paramcount > 0 then
     begin
 
@@ -629,25 +633,25 @@ begin
                 end;
             end;
         end;
-        
+
         InitMainScreen;
 
 (* The first parameter should be the file. *)
         filename    := paramstr(1);
-        
-(* Cheats the APPEND environment variable. *)    
+
+(* Cheats the APPEND environment variable. *)
         if (MSXDOSversion.nKernelMajor >= 2) then
             CheatAPPEND(filename);
 
         if c = 'B' then
             BackupFile;
-        
+
 (* Reads file from the disk. *)
         ReadFile(false);
 
         if newcolumn <> column then
             column  := newcolumn;
-    
+
         if newline <> currentline then
         begin
             currentline := newline;
