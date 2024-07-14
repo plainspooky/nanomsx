@@ -15,7 +15,7 @@ begin
     AddrHi := AddrHi + 4;
   {Set addr bit 16 in reg 14 = bit 2 }
   AddrLo  := Lo(VramAddr);
-  AddrMid := Hi(Vramaddr) and 63;
+  AddrMid := Hi(VramAddr) and 63;
   inline(
     $F3/$3A/ Expansion /$D3/$99/$3E/$2D/$F6/$80/$D3/$99/$3A/ AddrHi /$D3/
     $99/$3E/$0E/$F6/$80/$D3/$99/$3A/ AddrLo /$00/$D3/$99/$3A/ AddrMid /$F6/

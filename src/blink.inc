@@ -2,7 +2,14 @@
 
 procedure _WrtVdp(Port, Value: Byte);
 begin
-  inline ($F3/$3A/ Value  /$D3/$99/$3A/ Port /$F6/$80/$D3/$99 );
+  inline (
+    $F3/                        { DI                                   }
+    $3A/ Value /                { LD A,(`Value`)                       }
+    $D3/$99/                    { OUT ($99),A                          }
+    $3A/ Port /                 { LD A,(`Port`)                        }
+    $F6/$80/                    { OR $80                               }
+    $D3/$99                     { OUT ($99),A                          }
+  );
 end;
 
 procedure SetBlinkRate(OnTime, OffTime: Byte);

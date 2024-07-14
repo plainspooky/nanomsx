@@ -12,35 +12,35 @@ begin
   nIY := Swap( regs.IY );
 
   inline(
-    $F5/                  { PUSH AF      ; Push all registers  }
-    $C5/                  { PUSH BC                            }
-    $D5/                  { PUSH DE                            }
-    $E5/                  { PUSH HL                            }
-    $DD/$E5/              { PUSH IX                            }
-    $FD/$E5/              { PUSH IY                            }
-    $3A/nA/               { LD A , (nA )                       }
-    $ED/$4B/nBC/          { LD BC, (nBC)                       }
-    $ED/$5B/nDE/          { LD DE, (nDE)                       }
-    $2A/nHL/              { LD HL, (nHL)                       }
-    $DD/$2A/nIX/          { LD IX, (nIX)                       }
-    $FD/$2A/nIY/          { LD IY, (nIY)                       }
-    $CD/$1C/$00/          { CALL &H001C; CALL CALSLT           }
-    $32/nA/               { LD (nA ), A                        }
-    $ED/$43/nBC/          { LD (nBC), BC                       }
-    $ED/$53/nDE/          { LD (nDE), DE                       }
-    $22/nHL/              { LD (nHL), HL                       }
-    $DD/$22/nIX/          { LD (nIX), IX                       }
-    $FD/$22/nIY/          { LD (nIY), IY                       }
-    $F5/                  { PUSH AF                            }
-    $E1/                  { POP HL                             }
-    $22/nF/               { LD (nF), HL                        }
-    $FD/$E1/              { POP YI       ; Pop all registers   }
-    $DD/$E1/              { POP IX                             }
-    $E1/                  { POP HL                             }
-    $D1/                  { POP DE                             }
-    $C1/                  { POP BC                             }
-    $F1/                  { POP AF                             }
-    $FB                   { EI                                 }
+    $F5/                        { PUSH AF      ; Push all registers    }
+    $C5/                        { PUSH BC                              }
+    $D5/                        { PUSH DE                              }
+    $E5/                        { PUSH HL                              }
+    $DD/$E5/                    { PUSH IX                              }
+    $FD/$E5/                    { PUSH IY                              }
+    $3A/nA/                     { LD A , (nA )                         }
+    $ED/$4B/nBC/                { LD BC, (nBC)                         }
+    $ED/$5B/nDE/                { LD DE, (nDE)                         }
+    $2A/nHL/                    { LD HL, (nHL)                         }
+    $DD/$2A/nIX/                { LD IX, (nIX)                         }
+    $FD/$2A/nIY/                { LD IY, (nIY)                         }
+    $CD/$1C/$00/                { CALL &H001C; CALL CALSLT             }
+    $32/nA/                     { LD (nA ), A                          }
+    $ED/$43/nBC/                { LD (nBC), BC                         }
+    $ED/$53/nDE/                { LD (nDE), DE                         }
+    $22/nHL/                    { LD (nHL), HL                         }
+    $DD/$22/nIX/                { LD (nIX), IX                         }
+    $FD/$22/nIY/                { LD (nIY), IY                         }
+    $F5/                        { PUSH AF                              }
+    $E1/                        { POP HL                               }
+    $22/nF/                     { LD (nF), HL                          }
+    $FD/$E1/                    { POP YI       ; Pop all registers     }
+    $DD/$E1/                    { POP IX                               }
+    $E1/                        { POP HL                               }
+    $D1/                        { POP DE                               }
+    $C1/                        { POP BC                               }
+    $F1/                        { POP AF                               }
+    $FB                         { EI                                   }
   );
 
   (* Update the caller register struct *)
@@ -122,14 +122,14 @@ end;
 
 function msx_version: byte;
 var
-  version:    byte;
+  Version:    byte;
 begin
   inline(
-    $3e/$80/                    { ld a,$80                             }
-    $21/$2d/$00/                { ld hl,$002D                          }
-    $cd/$0c/$00/                { call $000c                           }
-    $32/version/                { ld (`version`),A                     }
-    $fb                         { ei                                   }
+    $3E/$80/                    { LD A,$80                             }
+    $21/$2D/$00/                { LD HL,$002D                          }
+    $CD/$0C/$00/                { CALL $000C                           }
+    $32/ Version /              { LD (`Version`),A                     }
+    $FB                         { EI                                   }
   );
-  msx_version := version + 1;
+  msx_version := Version + 1;
 end;

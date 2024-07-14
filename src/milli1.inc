@@ -4,18 +4,23 @@
 *)
 
 (* Read only one key, no echoes to the screen.*)
-
 function Readkey: char;
 begin
   Readkey := chr(0);
   CSRSW := 1;
-  inline($f3/$fd/$2a/$c0/$fc/$DD/$21/$9F/00/$CD/$1c/00/$32/Byt/$fb);
+  inline (
+    $F3/                        { DI                                   }
+    $FD/$2A/$C0/$FC/            { LD IY,(0FCC0H)                       }
+    $DD/$21/$9F/00/             { LD IX,0009FH                         }
+    $CD/$1C/00/                 { CALL 0001CH                          }
+    $32/ Byt /                  { LD (`Byt`),A                         }
+    $FB                         { EI                                   }
+  );
   Readkey := chr(Byt);
   CSRSW := 0;
 end;
 
 (* Read a string, echoes to the screen. Should tell how many chars would be read. *)
-
 function ReadString (MaxLen: Byte): TString;
 begin
   fillchar(temp, sizeof(temp), chr(32));
@@ -49,7 +54,6 @@ begin
 end; {ReadString}
 
 (* Finds the last occurence of a char into a string. *)
-
 function RPos(Character: char; Phrase: TString): integer;
 begin
   i := length(Phrase);
@@ -66,11 +70,8 @@ begin
 end;
 
 (*  Finds the first occurence of a char which is different into a string. *)
-
 function UnlikePos (Character: char; Phrase: TString): byte;
-
-  (* Used only into AlignText procedure. *)
-
+(* Used only into AlignText procedure. *)
 begin
   i := 0;
   Found := false;
@@ -88,11 +89,8 @@ begin
 end;
 
 (*  Finds the last occurence of a char which is different into a string. *)
-
 function RUnlikePos(Character: char; Phrase: TString): integer;
-
-  (* Used only into AlignText procedure. *)
-
+(* Used only into AlignText procedure. *)
 begin
   i := length(Phrase);
   Found := false;
@@ -111,14 +109,11 @@ end;
 
 (* Updates the APPEND environment variable, in order to use subdirectories in
 *  MSX-DOS 2. *)
-
 procedure CheatAPPEND (FileName: TString);
 var
   FirstTwoDotsFound, LastBackSlashFound: byte;
   APPEND: string[7];
-
 begin
-
   (* Initializing some variables... *)
   fillchar(Path, sizeof(Path), ' ' );
   fillchar(temp, sizeof(temp), ' ' );
@@ -132,7 +127,6 @@ begin
   (*  If there are two dots...  *)
   if FirstTwoDotsFound <> 0 then
   begin
-
     (*  Let me see where is the last backslash character...  *)
     LastBackSlashFound := RPos (chr(92), FileName);
     Path := copy (FileName, 1, LastBackSlashFound);
@@ -155,22 +149,31 @@ begin
   end;
 end;
 
-(* Sets Z80 mode in MSX Turbo-R. *)
-
+(* Sets Z80 mode in MSX Turbo-R. ***CHECK*** *)
 procedure TRZ80mode;
 begin
-  inline($3e/$00/$fd/$2a/$c0/$fc/$dd/$21/$80/$01/$cd/$1c/$00/$fb);
+  inline(
+    $3E/$00/                     { LD A,$00 <-                         }
+    $FD/$2A/$C0/$FC/	           { LD IY,($FCC0)                       }
+    $DD/$21/$80/$01/	           { LD IX,$0180                         }
+    $CD/$1C/$00/	               { CALL $001C                          }
+    $FB/	                       { EI                                  }
+  );
 end;
 
-(* Sets R800 mode in MSX Turbo-R. *)
-
+(* Sets R800 mode in MSX Turbo-R. ***CHECK*** *)
 procedure TRR800mode;
 begin
-  inline($3e/$00/$fd/$2a/$c0/$fc/$dd/$21/$80/$01/$cd/$1c/$00/$fb);
+  inline(
+    $3E/$00/                     { LD A,$00 <-                         }
+    $FD/$2A/$C0/$FC/	           { LD IY,($FCC0)                       }
+    $DD/$21/$80/$01/	           { LD IX,$0180                         }
+    $CD/$1C/$00/	               { CALL $001C                          }
+    $FB/	                       { EI                                  }
+  );
 end;
 
 (* Moves text from RAM to VRAM. *)
-
 procedure FromRAMToVRAM(var tempstr: TString; linenumber: integer);
 begin
   with textlines[linenumber] do
@@ -178,7 +181,6 @@ begin
 end;
 
 (* Moves text from VRAM to RAM. *)
-
 procedure FromVRAMToRAM(var tempstr: TString; linenumber: integer);
 begin
   with textlines[linenumber] do
@@ -186,7 +188,6 @@ begin
 end;
 
 (* Initializes the VRAM buffer and all structed variables which are related. *)
-
 procedure InitVRAM(linenumber: integer; var counter: real);
 begin
   with textlines[linenumber] do
@@ -214,7 +215,6 @@ begin
 end;
 
 (* Search for a blank block into VRAM. *)
-
 function SearchForBlankBlock(BlankLines: integer): integer;
 begin
   i := 0;
@@ -234,7 +234,6 @@ begin
 end;
 
 (* Insert some lines into text, into VRAM. *)
-
 procedure InsertLinesIntoText(CurrentLine   : integer;
   var TotalLines  : integer;
   BlankLines  : integer);
